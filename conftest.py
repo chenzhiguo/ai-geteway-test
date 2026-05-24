@@ -34,16 +34,16 @@ def test_config():
 
 @pytest.fixture(scope="session")
 def gateway_url(test_config):
-    """网关URL fixture"""
-    url = test_config.get("gateway", {}).get("url", "http://localhost:8080")
+    """网关URL fixture，支持环境变量 GATEWAY_URL 覆盖"""
+    url = os.getenv("GATEWAY_URL") or test_config.get("gateway", {}).get("url", "http://localhost:8080")
     logger.info(f"网关URL: {url}")
     return url
 
 
 @pytest.fixture(scope="session")
 def api_key(test_config):
-    """API密钥 fixture"""
-    api_key = test_config.get("gateway", {}).get("api_key", "test-api-key")
+    """API密钥 fixture，支持环境变量 GATEWAY_API_KEY 覆盖"""
+    api_key = os.getenv("GATEWAY_API_KEY") or test_config.get("gateway", {}).get("api_key", "test-api-key")
     return api_key
 
 

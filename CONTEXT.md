@@ -7,7 +7,9 @@
 
 ### RequestType
 请求类型，标识不同的LLM接口：
-- `chat_completion`：聊天补全接口
+- `chat_completion`：聊天补全接口（OpenAI格式）
+- `messages`：消息接口（Anthropic格式）
+- `generate_content`：内容生成接口（Google Gemini格式）
 - `embedding`：文本嵌入接口
 - `image_generation`：图像生成接口
 - `responses`：OpenAI Responses接口

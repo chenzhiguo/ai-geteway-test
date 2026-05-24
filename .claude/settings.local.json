@@ -8,7 +8,18 @@
       "Read(//Users/chenzhiguo/Projects/ai-gateway/**)",
       "Bash(poetry install *)",
       "Bash(pip install *)",
-      "Bash(pip3 install *)"
+      "Bash(pip3 install *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'docs: 更新README和添加GitHub配置 *)",
+      "Bash(git push *)",
+      "Bash(pytest e2e/test_chat.py -k \"mock\" -v)",
+      "Bash(poetry run *)",
+      "Bash(.venv/bin/pytest e2e/test_chat.py -k \"mock\" -v)",
+      "Bash(./venv/bin/pytest e2e/test_chat.py -k \"mock\" -v)",
+      "Bash(./venv/bin/pytest e2e/test_chat.py -v)",
+      "Bash(./venv/bin/pytest tests/test_mock_server.py -v)",
+      "Bash(GATEWAY_URL=\"http://free3.900406.xyz:8100\" ./venv/bin/pytest e2e/test_chat.py::TestChatCompletion::test_chat_completion_normal -v)",
+      "Bash(./venv/bin/pytest e2e/test_openai.py --collect-only)"
     ],
     "additionalDirectories": [
       "/Users/chenzhiguo/Projects/ai-gateway-test/docs"

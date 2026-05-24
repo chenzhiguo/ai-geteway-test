@@ -1,6 +1,7 @@
 """
 通用Mock服务器管理器
 """
+import json
 import logging
 import threading
 import time
@@ -161,7 +162,7 @@ class OpenAIMockServer(MockServer):
                         }
                     ]
                 }
-                yield f"data: {jsonify(data).get_data(as_text=True)}\n\n"
+                yield f"data: {json.dumps(data)}\n\n"
 
             # 结束标记
             yield "data: [DONE]\n\n"
@@ -266,7 +267,7 @@ class OpenAIMockServer(MockServer):
                         }
                     ]
                 }
-                yield f"data: {jsonify(data).get_data(as_text=True)}\n\n"
+                yield f"data: {json.dumps(data)}\n\n"
 
             # 结束标记
             yield "data: [DONE]\n\n"
@@ -370,7 +371,7 @@ class AnthropicMockServer(MockServer):
                     "content": [chunk],
                     "model": model
                 }
-                yield f"data: {jsonify(data).get_data(as_text=True)}\n\n"
+                yield f"data: {json.dumps(data)}\n\n"
 
             # 结束标记
             yield "data: [DONE]\n\n"
@@ -379,6 +380,131 @@ class AnthropicMockServer(MockServer):
             generate(),
             mimetype='text/event-stream'
         )
+
+
+class GoogleGeminiMockServer(MockServer):
+    """Google Gemini Mock服务器"""
+
+    def __init__(self, host: str, port: int, base_path: str):
+        super().__init__("Google Gemini", host, port, base_path)
+
+    def _register_routes(self):
+        """注册Google Gemini API路由"""
+
+        @self.app.route(f"{self.base_path}/models/<model>:generateContent", methods=["POST"])
+        def generate_content(model):
+            """内容生成接口"""
+            data = request.get_json()
+            return self._generate_response(model, data)
+
+        @self.app.route(f"{self.base_path}/models/<model>:streamGenerateContent", methods=["POST"])
+        def stream_generate_content(model):
+            """流式内容生成接口"""
+            data = request.get_json()
+            return self._stream_generate_response(model, data)
+
+        @self.app.route(f"{self.base_path}/models", methods=["GET"])
+        def list_models():
+            """模型列表接口"""
+            return self._model_list_response()
+
+    def _generate_response(self, model: str, data: Dict) -> Dict:
+        """生成响应"""
+        return jsonify({
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [
+                            {
+                                "text": "This is a mock response from Google Gemini."
+                            }
+                        ],
+                        "role": "model"
+                    },
+                    "finishReason": "STOP",
+                    "index": 0
+                }
+            ],
+            "usageMetadata": {
+                "promptTokenCount": 10,
+                "candidatesTokenCount": 20,
+                "totalTokenCount": 30
+            },
+            "modelVersion": model
+        })
+
+    def _stream_generate_response(self, model: str, data: Dict):
+        """生成流式响应"""
+        def generate():
+            chunks = [
+                "This",
+                " is",
+                " a",
+                " mock",
+                " response.",
+            ]
+
+            for text in chunks:
+                chunk_data = {
+                    "candidates": [
+                        {
+                            "content": {
+                                "parts": [
+                                    {
+                                        "text": text
+                                    }
+                                ],
+                                "role": "model"
+                            },
+                            "index": 0
+                        }
+                    ]
+                }
+                yield f"data: {json.dumps(chunk_data)}\n\n"
+
+            # 最终chunk包含usageMetadata
+            final_chunk = {
+                "candidates": [
+                    {
+                        "content": {
+                            "parts": [],
+                            "role": "model"
+                        },
+                        "finishReason": "STOP",
+                        "index": 0
+                    }
+                ],
+                "usageMetadata": {
+                    "promptTokenCount": 10,
+                    "candidatesTokenCount": 20,
+                    "totalTokenCount": 30
+                }
+            }
+            yield f"data: {json.dumps(final_chunk)}\n\n"
+
+        return self.app.response_class(
+            generate(),
+            mimetype='text/event-stream'
+        )
+
+    def _model_list_response(self) -> Dict:
+        """生成模型列表响应"""
+        return jsonify({
+            "models": [
+                {
+                    "name": "models/gemini-2.0-flash",
+                    "displayName": "Gemini 2.0 Flash",
+                    "description": "Fast and versatile performance",
+                    "supportedGenerationMethods": ["generateContent", "streamGenerateContent"]
+                },
+                {
+                    "name": "models/gemini-pro",
+                    "displayName": "Gemini Pro",
+                    "description": "Best for scaling across tasks",
+                    "supportedGenerationMethods": ["generateContent", "streamGenerateContent"]
+                }
+            ]
+        })
 
 
 class MockServerManager:
@@ -413,6 +539,17 @@ class MockServerManager:
             )
             server.start()
             self.servers["anthropic"] = server
+
+        # 启动Google Gemini Mock服务器
+        if "google" in mock_servers_config:
+            google_config = mock_servers_config["google"]
+            server = GoogleGeminiMockServer(
+                host=google_config.get("host", "127.0.0.1"),
+                port=google_config.get("port", 5004),
+                base_path=google_config.get("base_path", "/v1beta")
+            )
+            server.start()
+            self.servers["google"] = server
 
         # 等待服务器启动
         time.sleep(1)

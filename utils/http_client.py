@@ -121,6 +121,66 @@ class GatewayHttpClient:
         request_data["stream"] = True
         return self._post(url, request_data, stream=True, **kwargs)
 
+    def messages(self, request_data: Dict[str, Any], **kwargs) -> requests.Response:
+        """
+        发送Anthropic Messages请求
+
+        Args:
+            request_data: 请求数据
+            **kwargs: 其他请求参数
+
+        Returns:
+            响应对象
+        """
+        url = f"{self.base_url}/v1/messages"
+        return self._post(url, request_data, **kwargs)
+
+    def messages_stream(self, request_data: Dict[str, Any], **kwargs) -> requests.Response:
+        """
+        发送Anthropic Messages流式请求
+
+        Args:
+            request_data: 请求数据
+            **kwargs: 其他请求参数
+
+        Returns:
+            响应对象
+        """
+        url = f"{self.base_url}/v1/messages"
+        request_data["stream"] = True
+        return self._post(url, request_data, stream=True, **kwargs)
+
+    def gemini_generate(self, model: str, request_data: Dict[str, Any], **kwargs) -> requests.Response:
+        """
+        发送Google Gemini生成请求
+
+        Args:
+            model: 模型名称
+            request_data: 请求数据
+            **kwargs: 其他请求参数
+
+        Returns:
+            响应对象
+        """
+        url = f"{self.base_url}/v1beta/models/{model}:generateContent"
+        return self._post(url, request_data, **kwargs)
+
+    def gemini_stream(self, model: str, request_data: Dict[str, Any], **kwargs) -> requests.Response:
+        """
+        发送Google Gemini流式请求
+
+        Args:
+            model: 模型名称
+            request_data: 请求数据
+            **kwargs: 其他请求参数
+
+        Returns:
+            响应对象
+        """
+        url = f"{self.base_url}/v1beta/models/{model}:streamGenerateContent"
+        request_data["stream"] = True
+        return self._post(url, request_data, stream=True, **kwargs)
+
     def model_list(self, params: Optional[Dict[str, Any]] = None, **kwargs) -> requests.Response:
         """
         获取模型列表

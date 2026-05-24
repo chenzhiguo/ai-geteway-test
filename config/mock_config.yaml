@@ -26,6 +26,14 @@ mock_servers:
       - "deepseek-chat"
       - "deepseek-coder"
 
+  google:
+    host: "127.0.0.1"
+    port: 5004
+    base_path: "/v1beta"
+    models:
+      - "gemini-2.0-flash"
+      - "gemini-pro"
+
 # 响应模板
 response_templates:
   chat_completion:

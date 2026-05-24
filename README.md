@@ -15,12 +15,10 @@
 
 ### 测试覆盖
 
-- **E2E测试**：覆盖所有LLM接口类型
-  - 聊天补全接口（Chat Completion）
-  - 文本嵌入接口（Embedding）
-  - 图像生成接口（Image Generation）
-  - Responses接口
-  - 模型列表接口（Model List）
+- **E2E测试**：覆盖主流LLM提供商接口
+  - OpenAI接口（Chat、Embedding、Image、Responses、Models）
+  - Anthropic接口（Messages）
+  - Google接口（Gemini Generate Content）
 
 - **性能测试**：全面的性能指标监控
   - 吞吐量测试（QPS）
@@ -29,7 +27,7 @@
 
 ### 测试特性
 
-- **Mock服务器**：模拟OpenAI、Anthropic等LLM提供商
+- **Mock服务器**：模拟OpenAI、Anthropic、Google Gemini等LLM提供商
 - **测试报告**：支持终端、HTML和Allure报告
 - **配置管理**：YAML配置文件，支持环境变量替换
 - **日志记录**：详细的请求/响应日志
@@ -57,7 +55,9 @@ ai-gateway-test/
 │   ├── adr/                    # 架构决策记录
 │   └── agents/                 # Agent技能配置
 ├── e2e/                        # E2E测试目录
-│   ├── test_chat.py            # 聊天接口测试
+│   ├── test_openai.py          # OpenAI接口测试
+│   ├── test_anthropic.py       # Anthropic接口测试
+│   ├── test_google.py          # Google Gemini接口测试
 │   ├── test_embedding.py       # 嵌入接口测试
 │   ├── test_image.py           # 图像生成接口测试
 │   ├── test_responses.py       # Responses接口测试
@@ -143,22 +143,31 @@ vim config/mock_config.yaml
 
 ```bash
 # 运行所有测试
-pytest
+./venv/bin/pytest
+
+# 迋试远程Gateway
+GATEWAY_URL="http://your-gateway:port" ./venv/bin/pytest e2e/ -v
+
+# 使用Makefile测试远程Gateway
+make test-gw GATEWAY_URL="http://your-gateway:port"
 
 # 运行E2E测试
-pytest e2e/
+./venv/bin/pytest e2e/
+
+# 运行Mock服务器测试
+make test-mock
 
 # 运行性能测试
-pytest performance/
+./venv/bin/pytest performance/
 
 # 运行冒烟测试
-pytest -m smoke
+./venv/bin/pytest -m smoke
 
 # 生成HTML报告
-pytest --html=reports/report.html --self-contained-html
+./venv/bin/pytest --html=reports/report.html --self-contained-html
 
 # 生成Allure报告
-pytest --alluredir=reports/allure-results
+./venv/bin/pytest --alluredir=reports/allure-results
 allure generate reports/allure-results -o reports/allure-report
 ```
 
@@ -230,14 +239,20 @@ pytest会自动在终端显示测试结果。
 
 测试项目会自动启动Mock服务器来模拟LLM提供商。Mock服务器配置在`config/mock_config.yaml`中。
 
-#### 手动启动Mock服务器
+支持的Mock服务：
+- **OpenAI** (端口5001)：Chat、Embedding、Image、Responses、Models
+- **Anthropic** (端口5002)：Messages
+- **Google Gemini** (端口5004)：Generate Content
+- **DeepSeek** (端口5003)：配置已添加，复用OpenAI格式
+
+#### 运行Mock服务器测试
 
 ```bash
-# 启动OpenAI Mock服务器
-python -m mock.common_server
+# 测试Mock服务器是否正常工作
+make test-mock
 
-# 或者使用Poetry运行
-poetry run python -m mock.common_server
+# 或者直接运行
+./venv/bin/pytest tests/test_mock_server.py -v
 ```
 
 ## 配置说明
@@ -265,26 +280,44 @@ Mock服务器配置文件`config/mock_config.yaml`包含以下配置：
 
 | 测试类型 | 测试文件 | 测试用例数 | 测试场景 |
 |---------|---------|-----------|---------|
-| E2E测试 | test_chat.py | 5 | 聊天补全接口 |
+| E2E测试 | test_openai.py | 5 | OpenAI聊天补全接口 |
+| E2E测试 | test_anthropic.py | 5 | Anthropic Messages接口 |
+| E2E测试 | test_google.py | 6 | Google Gemini接口 |
 | E2E测试 | test_embedding.py | 5 | 文本嵌入接口 |
 | E2E测试 | test_image.py | 6 | 图像生成接口 |
 | E2E测试 | test_responses.py | 6 | Responses接口 |
 | E2E测试 | test_model_list.py | 5 | 模型列表接口 |
+| Mock测试 | test_mock_server.py | 9 | Mock服务器验证 |
 | 性能测试 | test_throughput.py | 3 | 吞吐量测试 |
 | 性能测试 | test_latency.py | 4 | 延迟测试 |
 | 性能测试 | test_concurrency.py | 4 | 并发测试 |
-| **总计** | **8个文件** | **39个用例** | - |
+| **总计** | **11个文件** | **58个用例** | - |
 
 ## 测试用例说明
 
 ### E2E测试
 
-#### 聊天补全接口（test_chat.py）
+#### OpenAI聊天补全接口（test_openai.py）
 - **正常流程**：测试基本聊天功能
 - **流式响应**：测试SSE流式响应
 - **边界条件**：测试空消息、超长消息等
 - **错误处理**：测试无效模型、无效请求体等
 - **网关特性**：测试多消息、温度参数、最大令牌数等
+
+#### Anthropic Messages接口（test_anthropic.py）
+- **正常流程**：测试基本消息功能
+- **流式响应**：测试SSE流式响应
+- **多轮对话**：测试多轮对话
+- **系统提示**：测试系统提示词
+- **错误处理**：测试无效模型、无效请求体等
+
+#### Google Gemini接口（test_google.py）
+- **正常流程**：测试基本内容生成功能
+- **流式响应**：测试SSE流式响应
+- **多轮对话**：测试多轮对话
+- **系统指令**：测试系统指令
+- **生成参数**：测试温度、最大输出令牌数等参数
+- **错误处理**：测试无效模型、无效请求体等
 
 #### 文本嵌入接口（test_embedding.py）
 - **正常流程**：测试基本嵌入功能
@@ -353,6 +386,12 @@ make test
 # 运行E2E测试
 make test-e2e
 
+# 运行Mock服务器测试
+make test-mock
+
+# 测试远程Gateway
+make test-gw GATEWAY_URL=http://your-gateway:port
+
 # 运行性能测试
 make test-performance
 
@@ -367,9 +406,6 @@ make report
 
 # 打开测试报告
 make open-report
-
-# 启动Mock服务器
-make mock
 
 # 清理临时文件
 make clean
@@ -391,46 +427,49 @@ make check
 
 ```bash
 # 运行所有测试
-pytest
+./venv/bin/pytest
 
 # 运行E2E测试
-pytest e2e/
+./venv/bin/pytest e2e/
+
+# 运行Mock服务器测试
+./venv/bin/pytest tests/test_mock_server.py
 
 # 运行性能测试
-pytest performance/
+./venv/bin/pytest performance/
 
 # 运行特定测试文件
-pytest e2e/test_chat.py
+./venv/bin/pytest e2e/test_openai.py
 
 # 运行特定测试用例
-pytest e2e/test_chat.py::TestChatCompletion::test_chat_completion_normal
+./venv/bin/pytest e2e/test_openai.py::TestChatCompletion::test_chat_completion_normal
 
 # 运行冒烟测试
-pytest -m smoke
+./venv/bin/pytest -m smoke
 
 # 运行回归测试
-pytest -m regression
+./venv/bin/pytest -m regression
 
 # 跳过性能测试
-pytest -m "not performance"
+./venv/bin/pytest -m "not performance"
 
 # 并行运行测试
-pytest -n auto
+./venv/bin/pytest -n auto
 
 # 生成HTML报告
-pytest --html=reports/report.html --self-contained-html
+./venv/bin/pytest --html=reports/report.html --self-contained-html
 
 # 生成Allure报告
-pytest --alluredir=reports/allure-results
+./venv/bin/pytest --alluredir=reports/allure-results
 
 # 查看详细日志
-pytest -v --log-cli-level=DEBUG
+./venv/bin/pytest -v --log-cli-level=DEBUG
 
 # 失败后重新运行
-pytest --reruns=3
+./venv/bin/pytest --reruns=3
 
 # 设置超时时间
-pytest --timeout=60
+./venv/bin/pytest --timeout=60
 ```
 
 ## 开发指南
@@ -489,8 +528,11 @@ class NewProviderMockServer(MockServer):
 
 环境变量示例：
 ```bash
-export TEST_GATEWAY_URL="http://localhost:8080"
-export TEST_GATEWAY_API_KEY="your-api-key"
+export GATEWAY_URL="http://your-gateway:port"
+export GATEWAY_API_KEY="your-api-key"
+
+# 或者一行运行测试
+GATEWAY_URL="http://your-gateway:port" ./venv/bin/pytest e2e/
 ```
 
 ## 性能基准
@@ -562,7 +604,23 @@ A: 检查以下几点：
 2. 配置文件是否正确
 3. API密钥是否有效
 4. 网络连接是否正常
-5. 查看详细日志：`pytest -v --log-cli-level=DEBUG`
+5. 查看详细日志：`./venv/bin/pytest -v --log-cli-level=DEBUG`
+
+### Q: 如何测试远程Gateway？
+
+A: 使用环境变量指定Gateway地址：
+```bash
+# 方式1：设置环境变量
+export GATEWAY_URL="http://your-gateway:port"
+export GATEWAY_API_KEY="your-api-key"
+./venv/bin/pytest e2e/
+
+# 方式2：一行命令
+GATEWAY_URL="http://your-gateway:port" ./venv/bin/pytest e2e/ -v
+
+# 方式3：使用Makefile
+make test-gw GATEWAY_URL="http://your-gateway:port"
+```
 
 ### Q: 如何查看详细日志？
 
@@ -714,15 +772,18 @@ make type-check
 - [x] 项目初始化
 - [x] E2E测试框架
 - [x] 性能测试框架
-- [x] Mock服务器
+- [x] Mock服务器（OpenAI、Anthropic、Google Gemini）
 - [x] 配置管理
 - [x] 日志记录
 - [x] CI/CD集成
 - [x] 测试报告
+- [x] Anthropic Messages接口支持
+- [x] Google Gemini接口支持
+- [x] 环境变量配置覆盖
 
 ### 计划中
 
-- [ ] 添加更多LLM提供商支持
+- [ ] 添加DeepSeek等更多LLM提供商支持
 - [ ] 添加压力测试
 - [ ] 添加稳定性测试
 - [ ] 添加混沌测试
@@ -784,19 +845,6 @@ docs(readme): update installation guide
 test(performance): add latency test for embedding
 ```
 
-## 相关项目
-
-- [AI Gateway](https://github.com/chenzhiguo/ai-gateway) - 大模型代理网关
-- [OpenRouter](https://openrouter.ai/) - 类似的LLM API网关
-
-## 许可证
-
-MIT License - 详见 [LICENSE](LICENSE) 文件
-
-## 致谢
-
-感谢所有贡献者和支持者！
-
 ## 联系方式
 
 - **项目维护者**: chenzhiguo
@@ -805,8 +853,6 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 - **问题反馈**: [GitHub Issues](https://github.com/chenzhiguo/ai-gateway-test/issues)
 - **功能建议**: [GitHub Discussions](https://github.com/chenzhiguo/ai-gateway-test/discussions)
 
-## 联系方式
+## 许可证
 
-- 项目维护者：chenzhiguo
-- 项目地址：https://github.com/chenzhiguo/ai-gateway-test
-- 问题反馈：[GitHub Issues](https://github.com/chenzhiguo/ai-gateway-test/issues)
+MIT License - 详见 [LICENSE](LICENSE) 文件

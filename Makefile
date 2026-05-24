@@ -1,6 +1,8 @@
 # AI Gateway测试项目Makefile
 
-.PHONY: help install test test-e2e test-performance report clean
+.PHONY: help install test test-e2e test-smoke test-mock test-gw test-performance report clean
+
+PYTEST := ./venv/bin/pytest
 
 # 默认目标
 help:
@@ -10,10 +12,12 @@ help:
 	@echo "  make install        安装依赖"
 	@echo "  make test           运行所有测试"
 	@echo "  make test-e2e       运行E2E测试"
+	@echo "  make test-smoke     运行冒烟测试"
+	@echo "  make test-mock      运行Mock服务器测试"
+	@echo "  make test-gw        测试远程Gateway (需设置 GATEWAY_URL)"
 	@echo "  make test-performance 运行性能测试"
 	@echo "  make report         生成测试报告"
 	@echo "  make clean          清理临时文件"
-	@echo "  make mock           启动Mock服务器"
 
 # 安装依赖
 install:
@@ -21,23 +25,34 @@ install:
 
 # 运行所有测试
 test:
-	pytest -v --html=reports/report.html --self-contained-html --alluredir=reports/allure-results
+	$(PYTEST) -v --html=reports/report.html --self-contained-html --alluredir=reports/allure-results
 
 # 运行E2E测试
 test-e2e:
-	pytest e2e/ -v --html=reports/e2e-report.html --self-contained-html
+	$(PYTEST) e2e/ -v --html=reports/e2e-report.html --self-contained-html
 
 # 运行性能测试
 test-performance:
-	pytest performance/ -v --html=reports/performance-report.html --self-contained-html
+	$(PYTEST) performance/ -v --html=reports/performance-report.html --self-contained-html
 
 # 运行冒烟测试
 test-smoke:
-	pytest -m smoke -v
+	$(PYTEST) -m smoke -v
+
+# 运行Mock服务器测试
+test-mock:
+	$(PYTEST) tests/test_mock_server.py -v
+
+# 测试远程Gateway
+test-gw:
+ifndef GATEWAY_URL
+	$(error GATEWAY_URL is not set. Usage: make test-gw GATEWAY_URL=http://your-gateway:port)
+endif
+	$(PYTEST) e2e/ -v
 
 # 运行回归测试
 test-regression:
-	pytest -m regression -v
+	$(PYTEST) -m regression -v
 
 # 生成测试报告
 report:

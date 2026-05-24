@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la ~/.claude/skills/setup-matt-pocock-skills/)",
+      "Read(//Users/chenzhiguo/.agents/skills/setup-matt-pocock-skills/**)",
+      "Bash(mkdir -p docs/agents)",
+      "Bash(find /Users/chenzhiguo/Projects/ai-gateway -name \"*.md\" -type f 2>/dev/null)",
+      "Read(//Users/chenzhiguo/Projects/ai-gateway/**)",
+      "Bash(poetry install *)",
+      "Bash(pip install *)",
+      "Bash(pip3 install *)"
+    ],
+    "additionalDirectories": [
+      "/Users/chenzhiguo/Projects/ai-gateway-test/docs"
+    ]
+  }
+}

@@ -1,0 +1,94 @@
+# AI Gateway测试配置
+gateway:
+  url: "http://localhost:8080"
+  api_key: "test-api-key"
+  timeout: 30
+
+# E2E测试配置
+e2e:
+  # 测试模型
+  models:
+    chat:
+      - "gpt-4"
+      - "gpt-3.5-turbo"
+      - "claude-sonnet-4-20250514"
+    embedding:
+      - "text-embedding-ada-002"
+    image:
+      - "dall-e-3"
+    responses:
+      - "gpt-4"
+
+  # 测试场景
+  scenarios:
+    normal_flow: true
+    error_handling: true
+    boundary_conditions: true
+    gateway_features: true
+
+  # 超时配置
+  timeouts:
+    request_timeout: 30
+    stream_timeout: 60
+    long_running_timeout: 120
+
+# 性能测试配置
+performance:
+  # 吞吐量测试
+  throughput:
+    target_qps: 100
+    duration_seconds: 60
+    ramp_up_seconds: 10
+
+  # 延迟测试
+  latency:
+    target_p50_ms: 200
+    target_p95_ms: 500
+    target_p99_ms: 1000
+
+  # 并发测试
+  concurrency:
+    max_concurrent_requests: 50
+    connection_pool_size: 100
+
+  # 资源监控
+  resource_monitoring:
+    enabled: true
+    cpu_threshold: 80
+    memory_threshold: 80
+
+# 测试数据
+test_data:
+  chat_messages:
+    - role: "user"
+      content: "Hello, how are you?"
+    - role: "user"
+      content: "What is the weather today?"
+    - role: "user"
+      content: "Tell me a joke."
+
+  embedding_texts:
+    - "Hello world"
+    - "AI Gateway testing"
+    - "Performance benchmark"
+
+  image_prompts:
+    - "A beautiful sunset"
+    - "A cat sitting on a chair"
+    - "Abstract art"
+
+# 日志配置
+logging:
+  level: "INFO"
+  format: "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
+  date_format: "%Y-%m-%d %H:%M:%S"
+  file: "logs/test.log"
+  max_size_mb: 10
+  backup_count: 5
+
+# 报告配置
+reporting:
+  html_report: true
+  allure_report: true
+  terminal_report: true
+  report_dir: "reports"

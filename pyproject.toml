@@ -1,0 +1,44 @@
+[tool.poetry]
+name = "ai-gateway-test"
+version = "0.1.0"
+description = "AI Gateway自动化测试项目"
+authors = ["Your Name <your.email@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pytest = "^7.4.0"
+pytest-html = "^4.0.0"
+allure-pytest = "^2.13.0"
+requests = "^2.31.0"
+httpx = "^0.25.0"
+flask = "^3.0.0"
+pyyaml = "^6.0.1"
+python-dotenv = "^1.0.0"
+locust = "^2.17.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest-xdist = "^3.5.0"
+pytest-timeout = "^2.2.0"
+pytest-rerunfailures = "^13.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = ["e2e", "performance"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --strict-markers"
+markers = [
+    "e2e: E2E测试",
+    "performance: 性能测试",
+    "smoke: 冒烟测试",
+    "regression: 回归测试",
+]
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"

@@ -20,9 +20,10 @@
   - Anthropic接口（Messages）
   - Google接口（Gemini Generate Content）
 
-- **性能测试**：全面的性能指标监控
+- **性能测试**：全面的性能指标监控，覆盖所有接口
   - 吞吐量测试（QPS）
   - 延迟测试（P50、P95、P99）
+  - 流式响应延迟测试（TTFT）
   - 并发测试
 
 ### 测试特性
@@ -288,10 +289,10 @@ Mock服务器配置文件`config/mock_config.yaml`包含以下配置：
 | E2E测试 | test_responses.py | 6 | Responses接口 |
 | E2E测试 | test_model_list.py | 5 | 模型列表接口 |
 | Mock测试 | test_mock_server.py | 9 | Mock服务器验证 |
-| 性能测试 | test_throughput.py | 3 | 吞吐量测试 |
-| 性能测试 | test_latency.py | 4 | 延迟测试 |
-| 性能测试 | test_concurrency.py | 4 | 并发测试 |
-| **总计** | **11个文件** | **58个用例** | - |
+| 性能测试 | test_throughput.py | 8 | 吞吐量测试（Chat、Embedding、ModelList、Image、Responses、Messages、Gemini、Health） |
+| 性能测试 | test_latency.py | 12 | 延迟测试（含流式TTFT：Chat、Embedding、ModelList、Image、Responses、Messages、Gemini、Health、Stream×4） |
+| 性能测试 | test_concurrency.py | 9 | 并发测试（Chat、Embedding、ModelList、Image、Responses、Messages、Gemini、Health、Mixed） |
+| **总计** | **11个文件** | **76个用例** | - |
 
 ## 测试用例说明
 
@@ -356,18 +357,36 @@ Mock服务器配置文件`config/mock_config.yaml`包含以下配置：
 - **聊天补全接口吞吐量**：测试QPS
 - **文本嵌入接口吞吐量**：测试QPS
 - **模型列表接口吞吐量**：测试QPS
+- **图片生成接口吞吐量**：测试QPS（降低目标QPS）
+- **Responses接口吞吐量**：测试QPS
+- **Messages接口吞吐量**：测试QPS
+- **Gemini生成接口吞吐量**：测试QPS
+- **健康检查接口吞吐量**：测试QPS
 
 #### 延迟测试（test_latency.py）
 - **聊天补全接口延迟**：测试P50、P95、P99
 - **文本嵌入接口延迟**：测试P50、P95、P99
 - **模型列表接口延迟**：测试P50、P95、P99
-- **流式响应延迟**：测试首字节时间（TTFT）
+- **图片生成接口延迟**：测试P50、P95、P99（独立阈值）
+- **Responses接口延迟**：测试P50、P95、P99
+- **Messages接口延迟**：测试P50、P95、P99
+- **Gemini生成接口延迟**：测试P50、P95、P99
+- **健康检查接口延迟**：测试P50、P95、P99（独立阈值）
+- **聊天流式响应延迟**：测试首字节时间（TTFT）
+- **Responses流式响应延迟**：测试首字节时间（TTFT）
+- **Messages流式响应延迟**：测试首字节时间（TTFT）
+- **Gemini流式响应延迟**：测试首字节时间（TTFT）
 
 #### 并发测试（test_concurrency.py）
 - **聊天补全接口并发**：测试并发性能
 - **文本嵌入接口并发**：测试并发性能
 - **模型列表接口并发**：测试并发性能
-- **混合接口并发**：测试混合接口并发性能
+- **图片生成接口并发**：测试并发性能
+- **Responses接口并发**：测试并发性能
+- **Messages接口并发**：测试并发性能
+- **Gemini生成接口并发**：测试并发性能
+- **健康检查接口并发**：测试并发性能
+- **混合接口并发**：测试多种接口混合并发性能
 
 ## 常用命令
 
@@ -551,6 +570,11 @@ GATEWAY_URL="http://your-gateway:port" ./venv/bin/pytest e2e/
 | 聊天补全 | 100 | <200ms | <500ms | <1000ms |
 | 文本嵌入 | 200 | <100ms | <200ms | <500ms |
 | 模型列表 | 500 | <50ms | <100ms | <200ms |
+| 图片生成 | 10 | <3000ms | <5000ms | <8000ms |
+| Responses | 100 | <200ms | <500ms | <1000ms |
+| Messages | 100 | <200ms | <500ms | <1000ms |
+| Gemini生成 | 100 | <200ms | <500ms | <1000ms |
+| 健康检查 | 500 | <50ms | <100ms | <200ms |
 
 ### 运行性能测试
 
@@ -581,18 +605,24 @@ performance:
   throughput:
     target_qps: 100
     duration_seconds: 60
-    ramp_up_seconds: 10
+    image_target_qps: 10
+    health_target_qps: 500
 
   # 延迟测试
   latency:
     target_p50_ms: 200
     target_p95_ms: 500
     target_p99_ms: 1000
+    image_target_p50_ms: 3000
+    image_target_p95_ms: 5000
+    image_target_p99_ms: 8000
+    health_target_p50_ms: 50
+    health_target_p95_ms: 100
+    health_target_p99_ms: 200
 
   # 并发测试
   concurrency:
     max_concurrent_requests: 50
-    connection_pool_size: 100
 ```
 
 ## 常见问题

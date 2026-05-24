@@ -5,13 +5,21 @@
 ## [未发布]
 
 ### 新增
-- 无
+- 性能测试新增5个接口覆盖：图片生成、Responses、Messages、Gemini生成、健康检查
+- 性能测试新增流式延迟测试：Responses流式、Messages流式、Gemini流式
+- 新增`performance/utils.py`共享工具模块（percentile函数）
 
 ### 变更
-- 无
+- 性能测试用例数从11个扩展到29个
+- 吞吐量测试响应时间单位统一为毫秒
+- 移除未使用的配置项（ramp_up_seconds、connection_pool_size）
+- 更新配置文件新增图片生成和健康检查的独立阈值
 
 ### 修复
-- 无
+- 修复并发测试时间测量bug：原来测量的是future.result()调用耗时而非实际请求耗时
+- 修复延迟测试全部失败时的KeyError异常
+- 修复吞吐量测试线程池无上限增长问题
+- 提取重复的percentile函数到共享模块
 
 ## [1.0.0] - 2026-05-24
 

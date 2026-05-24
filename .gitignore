@@ -66,3 +66,6 @@ logs/
 
 # GitHub Actions
 .github/workflows/*.yml.bak
+
+# Claude Code
+.claude/
